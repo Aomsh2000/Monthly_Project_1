@@ -7,10 +7,15 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Bugsnag.AspNet.Core;
 using Microsoft.Extensions.Logging;
+using HealthSystem.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -46,7 +51,9 @@ builder.Services.AddCors(options =>
 	});
 });
 
-
+//Twilio - Register the Service
+builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("Twilio"));
+builder.Services.AddTransient<ITwilioService, TwilioService>();
 
 builder.Services.AddSwaggerGen();
 
@@ -65,6 +72,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 		};
 	});
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,6 +1,7 @@
 using HealthSystem.Controllers;
 using HealthSystem.Data;
 using HealthSystem.Models;
+using HealthSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -12,12 +13,12 @@ namespace HealthSystem.Tests.Controllers
     {
         private readonly AdminController _controller;
         private readonly AppDbContext _context;
-
+        private readonly ITwilioService _twilioService;
         public AdminControllerTests()
         {
             // Create a new in-memory database and controller instance for each test
             _context = GetFakeDbContext();
-            _controller = new AdminController(_context);
+            _controller = new AdminController(_context, _twilioService);
         }
 
 
