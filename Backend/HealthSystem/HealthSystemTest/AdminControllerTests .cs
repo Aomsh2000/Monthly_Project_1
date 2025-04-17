@@ -4,6 +4,7 @@ using HealthSystem.Models;
 using HealthSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Reflection;
 using Xunit;
 
@@ -14,12 +15,18 @@ namespace HealthSystem.Tests.Controllers
         private readonly AdminController _controller;
         private readonly AppDbContext _context;
         private readonly ITwilioService _twilioService;
-        public AdminControllerTests()
+        private readonly IDistributedCache _cache;
+
+        public AdminControllerTests(AppDbContext context, ITwilioService twilioService, IDistributedCache cache)
         {
-            // Create a new in-memory database and controller instance for each test
-            _context = GetFakeDbContext();
-            _controller = new AdminController(_context, _twilioService);
+            _context = GetFakeDbContext(); ;
+            _twilioService = twilioService;
+            _cache = cache;
+            _controller = new AdminController(_context, _twilioService, _cache);
+
         }
+
+
 
 
         // Create an in-memory database for testing

@@ -8,7 +8,8 @@ using System.Text;
 using Bugsnag.AspNet.Core;
 using Microsoft.Extensions.Logging;
 using HealthSystem.Services;
-
+// Add this at the top of Program.cs
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration
@@ -43,8 +44,23 @@ var dbPassword = builder.Configuration["DB_PASSWORD"];
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection").Replace("{DB_PASSWORD}", dbPassword);
 
 // Configure DbContext with MySQL
+// Configure DbContext with MySQL and Logging
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+{
+    var loggerFactory = LoggerFactory.Create(loggingBuilder =>
+    {
+        loggingBuilder
+            .AddConsole()
+            .AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Information);
+    });
+
+    options
+        .UseLoggerFactory(loggerFactory) //  Log SQL queries
+        .EnableSensitiveDataLogging()    //  Include parameter values in logs
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
+
+
 
 // CORS Configuration
 builder.Services.AddCors(options =>
@@ -56,7 +72,12 @@ builder.Services.AddCors(options =>
 			  .AllowAnyMethod();
 	});
 });
-
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";
+});
+// Register IMemoryCache
+builder.Services.AddMemoryCache();
 //Twilio - Register the Service
 builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("Twilio"));
 builder.Services.AddTransient<ITwilioService, TwilioService>();

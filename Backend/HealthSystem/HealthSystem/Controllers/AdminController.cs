@@ -6,13 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto.Generators;
 using BCrypt.Net;
 using OfficeOpenXml;
-
+using System.Text.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using HealthSystem.Services;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace HealthSystem.Controllers
 {
@@ -22,20 +23,30 @@ namespace HealthSystem.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITwilioService _twilioService;
+        private readonly IDistributedCache _cache;
 
-        public AdminController(AppDbContext context, ITwilioService twilioService)
+        public AdminController(AppDbContext context, ITwilioService twilioService, IDistributedCache cache)
         {
             _context = context;
             _twilioService = twilioService;
+            _cache = cache;
         }
 
 
         // ------- Admin & statistics -------
 
-        [Authorize(Roles = "Admin")]
+      //  [Authorize(Roles = "Admin")]
         [HttpGet("graph/barChart")]
         public async Task<IActionResult> Barchart()
         {
+            var cacheKey = "barChartData";
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                return Ok(System.Text.Json.JsonSerializer.Deserialize<object>(cachedData));
+            }
+
             var patientsCount = await _context.Patients.CountAsync();
             var doctorsCount = await _context.Doctors.CountAsync();
 
@@ -45,21 +56,42 @@ namespace HealthSystem.Controllers
                 doctors = doctorsCount
             };
 
+            var options = new DistributedCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(10)); // Cache duration
+
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(BarchartData);
+            await _cache.SetStringAsync(cacheKey, serializedData, options);
+
             return Ok(BarchartData);
         }
 
-        [Authorize(Roles = "Admin")]
+      //  [Authorize(Roles = "Admin")]
         [HttpGet("graph/piechart")]
         public async Task<IActionResult> Piechart()
         {
+            var cacheKey = "PiechartData";
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                var data = JsonSerializer.Deserialize<object>(cachedData);
+                return Ok(data);
+            }
+
             var maleCount = await _context.Patients.CountAsync(p => p.Gender == Gender.Male);
             var femaleCount = await _context.Patients.CountAsync(p => p.Gender == Gender.Female);
 
             var PiechartData = new[]
             {
-            new { name = "Male", value = maleCount },
-            new { name = "Female", value = femaleCount },
-        };
+        new { name = "Male", value = maleCount },
+        new { name = "Female", value = femaleCount },
+    };
+
+            var serializedData = JsonSerializer.Serialize(PiechartData);
+            await _cache.SetStringAsync(cacheKey, serializedData, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
 
             return Ok(PiechartData);
 
@@ -67,7 +99,7 @@ namespace HealthSystem.Controllers
 
 
         // ------- Admin & Patient -------
-        [Authorize(Roles = "Admin")]
+    //    [Authorize(Roles = "Admin")]
         [HttpPost("create-patient")]
         public async Task<IActionResult> CreatePatient([FromBody] PatientCreateRequest request)
         {
@@ -159,7 +191,7 @@ namespace HealthSystem.Controllers
 
 
         // ****  Create new Doctor API  *****
-        [Authorize(Roles = "Admin")]
+  //      [Authorize(Roles = "Admin")]
         [HttpPost("create-doctor")]
         public async Task<IActionResult> CreateDoctor([FromBody] CreateDoctorRequest request)
         {
@@ -228,9 +260,18 @@ namespace HealthSystem.Controllers
         [HttpGet("doctors")]
         public async Task<IActionResult> GetDoctors()
         {
+            var cacheKey = "DoctorsWithDetails";
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                var cachedDoctors = JsonSerializer.Deserialize<List<object>>(cachedData);
+                return Ok(cachedDoctors);
+            }
+
             var doctors = await _context.Doctors
-                .Include(d => d.User)  // Include User details (eager)
-                .Include(d => d.WorkingHours)  // Include Working Hours details
+                .Include(d => d.User)
+                .Include(d => d.WorkingHours)
                 .ToListAsync();
 
             var doctorDtos = new List<object>();
@@ -253,23 +294,22 @@ namespace HealthSystem.Controllers
                     gender = doctor.Gender,
                     specialization = doctor.Specialization,
                     clinic = doctor.Clinic,
-                    workingHours = new List<object>()
-                };
-
-                // Loop through the working hours 
-                foreach (var workingHour in doctor.WorkingHours)
-                {
-                    var workingHourDto = new
+                    workingHours = doctor.WorkingHours.Select(wh => new
                     {
-                        day = workingHour.Day.ToString().ToUpper(),
-                        startTime = workingHour.StartTime.ToString(@"hh\:mm"),
-                        endTime = workingHour.EndTime.ToString(@"hh\:mm")
-                    };
-                    (doctorDto.workingHours as List<object>).Add(workingHourDto);
-                }
+                        day = wh.Day.ToString().ToUpper(),
+                        startTime = wh.StartTime.ToString(@"hh\:mm"),
+                        endTime = wh.EndTime.ToString(@"hh\:mm")
+                    }).ToList()
+                };
 
                 doctorDtos.Add(doctorDto);
             }
+
+            var serializedData = JsonSerializer.Serialize(doctorDtos);
+            await _cache.SetStringAsync(cacheKey, serializedData, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
 
             return Ok(doctorDtos);
         }
@@ -359,7 +399,7 @@ namespace HealthSystem.Controllers
 
         // ****  Get download Excel file contain doctor information API  *****
         // GET: /api/admin/download-excel/{doctorId}
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpGet("download-excel/{doctorId}")]
         public async Task<IActionResult> DownloadDoctorExcel(Guid doctorId)
         {
@@ -415,62 +455,65 @@ namespace HealthSystem.Controllers
         [HttpGet("getAllAvailablAappointments")]
         public async Task<IActionResult> GetAvailableAppointments(DateTime date, ClinicType clinic)
         {
-            // Get the day of the week for the selected date
+            // Create a unique cache key using both date and clinic
+            var cacheKey = $"AvailableAppointments_{clinic}_{date:yyyyMMdd}";
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                var cachedAppointments = JsonSerializer.Deserialize<object>(cachedData);
+                return Ok(cachedAppointments);
+            }
+
             var dayOfWeek = date.DayOfWeek;
 
-            // Get all doctors who belong to the selected clinic
             var doctorsInClinic = await _context.Doctors
                 .Where(d => d.Clinic == clinic)
                 .Include(d => d.WorkingHours)
                 .Include(d => d.User)
                 .ToListAsync();
 
-            Console.WriteLine($"Doctors in Clinic ({doctorsInClinic.Count}):");
-            // This will hold all the available time slots for all doctors
             var availableAppointments = new List<object>();
 
             foreach (var doctor in doctorsInClinic)
             {
-                // Get the working hours for the selected day of the week
                 var workingHours = doctor.WorkingHours
                     .Where(wh => (DayOfWeek)wh.Day == dayOfWeek)
                     .ToList();
 
                 foreach (var hours in workingHours)
                 {
-                    // Get any booked appointments for this doctor on the selected date
                     var bookedAppointments = await _context.Appointments
                         .Where(a => a.DoctorUserID == doctor.UserID
                                  && a.AppointmentDate.Date == date.Date
                                  && a.Status == AppointmentStatus.Upcoming)
                         .ToListAsync();
 
-                    // Generate available time slots within the working hours
                     var availableTimeSlots = GetAvailableTimeSlots(hours, bookedAppointments);
 
-                    // Only add to the result if there are available time slots
                     if (availableTimeSlots != null)
                     {
                         availableAppointments.Add(new
                         {
                             DoctorName = $"{doctor.User.FirstName} {doctor.User.LastName}",
-                            DoctorID=doctor.User.UserID,
+                            DoctorID = doctor.User.UserID,
                             Specialization = doctor.Specialization,
                             Clinic = doctor.Clinic,
                             AvailableTimeSlots = availableTimeSlots
                         });
                     }
-                    else
-                    {
-                        Console.WriteLine("no availableTimeSlots:");
-                        // For example, log the issue or skip the doctor
-                    }
-
                 }
             }
 
-            // Return available appointments as JSON
-            return Ok(new { availableAppointments });
+            var result = new { availableAppointments };
+            var serializedData = JsonSerializer.Serialize(result);
+
+            await _cache.SetStringAsync(cacheKey, serializedData, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) // You can adjust the duration
+            });
+
+            return Ok(result);
         }
 
         private List<TimeSpan> GetAvailableTimeSlots(WorkingHours workingHours, List<Appointment> bookedAppointments)

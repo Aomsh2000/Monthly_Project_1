@@ -1,35 +1,47 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HealthSystem.Data;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Authorization;
+using HealthSystem.Data;
+using HealthSystem.Models;
 
 namespace HealthSystem.Controllers
 {
-
     [Route("api/patients")]
     [ApiController]
     public class PatientController : ControllerBase
     {
+        private readonly IMemoryCache _cache;
         private readonly AppDbContext _context;
 
-        public PatientController(AppDbContext context)
+        public PatientController(AppDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // 1. GET patient data by UserID
-        [Authorize (Roles ="Patient")] 
+        //[Authorize(Roles = "Patient")]
         [HttpGet("getPatientData/{userId}")]
         public async Task<IActionResult> GetPatientData(Guid userId)
         {
-            var user = await _context.Users
-                .Include(u => u.Patient) 
-                .Where(u => u.UserID == userId)
-                .FirstOrDefaultAsync();
-
-            if (user == null)
+            if (!_cache.TryGetValue($"user{userId}", out User user))
             {
-                return NotFound("User not found.");
+                // Simulate slow database response
+                Thread.Sleep(5000);
+                user = await _context.Users
+                    .Include(u => u.Patient)
+                    .FirstOrDefaultAsync(u => u.UserID == userId);
+
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+                _cache.Set($"user{userId}", user, cacheOptions);
             }
 
             var patientData = new
@@ -60,24 +72,33 @@ namespace HealthSystem.Controllers
         }
 
         // 2. GET all patient's appointments by UserID
-        [Authorize(Roles = "Patient")]
+        //[Authorize(Roles = "Patient")]
         [HttpGet("getAppointments/{userId}")]
         public async Task<IActionResult> GetAppointments(Guid userId)
         {
-            var patient = await _context.Patients
-                .Include(p => p.Appointments)
-                .ThenInclude(a => a.Doctor)
-                .ThenInclude(d => d.User)
-                .Where(p => p.UserID == userId)
-                .FirstOrDefaultAsync();
-
-            if (patient == null)
+            if (!_cache.TryGetValue($"appointments{userId}", out Patient patient))
             {
-                return NotFound("Patient not found.");
+                // Simulate slow database response
+                Thread.Sleep(5000);
+                patient = await _context.Patients
+                    .Include(p => p.Appointments)
+                        .ThenInclude(a => a.Doctor)
+                            .ThenInclude(d => d.User)
+                    .FirstOrDefaultAsync(p => p.UserID == userId);
+
+                if (patient == null)
+                {
+                    return NotFound("Patient not found.");
+                }
+
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+                _cache.Set($"appointments{userId}", patient, cacheOptions);
             }
 
             var appointments = patient.Appointments
-                .Where(a => a.Doctor != null) 
+                .Where(a => a.Doctor != null)
                 .Select(a => new
                 {
                     a.AppointmentID,
@@ -85,16 +106,15 @@ namespace HealthSystem.Controllers
                     a.AppointmentTime,
                     status = a.Status.ToString(),
                     a.Note,
-                    Doctor = a.Doctor != null ? new
+                    Doctor = new
                     {
                         FirstName = a.Doctor.User?.FirstName,
                         LastName = a.Doctor.User?.LastName,
-                    } : null
+                    }
                 })
                 .ToList();
 
             return Ok(appointments);
         }
-
     }
 }
