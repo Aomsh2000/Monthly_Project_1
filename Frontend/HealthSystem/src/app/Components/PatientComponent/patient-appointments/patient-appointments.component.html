@@ -25,7 +25,6 @@
           <th>Time</th>
           <th>Doctor</th>
           <th>Status</th>
-          <th>Note</th>
         </tr>
       </thead>
       <tbody>
@@ -38,15 +37,15 @@
           </td>
 
           <td>
+            <!-- Update Status dynamically based on the filtered appointments -->
             <span class="badge" [ngClass]="{
-              'bg-success': appointment.status === 'Upcoming',
-              'bg-warning text-dark': appointment.status === 'Current',
-              'bg-danger': appointment.status === 'Past'
-            }">
-              {{ appointment.status }}
+                    'bg-success': appointment.statusText === 'Upcoming', 
+                    'bg-warning': appointment.statusText === 'Current', 
+                    'bg-danger': appointment.statusText === 'Past'
+                  }">
+              {{ appointment.statusText }}
             </span>
           </td>
-          <td>{{ appointment.note }}</td>
         </tr>
       </tbody>
     </table>

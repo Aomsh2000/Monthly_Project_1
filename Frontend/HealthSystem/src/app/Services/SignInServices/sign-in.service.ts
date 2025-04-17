@@ -11,14 +11,18 @@ export class SignInService {
   constructor(private http: HttpClient) { }
 
   // Method to sign in and get the token
-  signIn(userID: string, password: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl, { userID, password });
+  signIn(Email: string, password: string): Observable<any> {
+    return this.http.post<any>(this.apiUrl, { Email, password });
   }
 
   // Store the token in localStorage (or sessionStorage, depending on your preference)
   storeToken(token: string): void {
     localStorage.setItem('jwtToken', token);
   }
+
+  // storeID(ID: string): void {
+  //   localStorage.setItem('userID', ID);
+  // }
 
   // Get the stored token (for use in requests)
   getToken(): string | null {

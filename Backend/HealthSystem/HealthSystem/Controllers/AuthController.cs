@@ -32,16 +32,16 @@ namespace HealthSystem.Controllers
         public async Task<IActionResult> SignIn([FromBody] SignIn signInRequest)
         {
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserID == signInRequest.UserID);
+                .FirstOrDefaultAsync(u => u.Email == signInRequest.Email);
 
-            if (user == null || user.Password != signInRequest.Password)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(signInRequest.Password, user.Password))
             {
-                return Unauthorized("Invalid ID or password.");
+                return Unauthorized("Invalid Email or password.");
             }
 
             var token = GenerateJwtToken(user);
 
-            return Ok(new { Token = token, Role = user.Role.ToString() });
+            return Ok(new { Token = token, Role = user.Role.ToString(), ID=user.UserID });
         }
 
         private string GenerateJwtToken(User user)

@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; // Import RouterModule here
+import { RouterModule } from '@angular/router'; 
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, RouterModule],  // Add RouterModule to the imports array
+  imports: [CommonModule, RouterModule],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.css']
 })
@@ -16,9 +16,11 @@ export class AdminComponent {
     private router: Router
   ) { }
 
- // Navigate to Login Page
- showLogin() {
-  localStorage.removeItem('userID');
-  this.router.navigate(['/signin']);
-}
+  // Navigate to Login Page
+  showLogin() {
+    localStorage.removeItem('userID');
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwtToken');
+    this.router.navigate(['/signin']);
+  }
 }

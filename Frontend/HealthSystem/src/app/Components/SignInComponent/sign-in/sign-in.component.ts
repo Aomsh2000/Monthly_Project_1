@@ -14,29 +14,29 @@ import { Router } from '@angular/router';
   styleUrls: ['./sign-in.component.css']
 })
 export class SigninComponent {
-  userID: string = '';
+  email: string = '';
   password: string = '';
   errorMessage: string = '';
 
   constructor(private signInService: SignInService, private router: Router) { }
 
   signIn(): void {
-    if (!this.userID || !this.password) {
-      this.errorMessage = 'Please enter both ID and password.';
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Please enter both email and password.';
       return;
     }
 
-    this.signInService.signIn(this.userID, this.password).subscribe({
+    this.signInService.signIn(this.email, this.password).subscribe({
       next: (response) => {
         // Store the token in localStorage (or sessionStorage, if preferred)
-        this.signInService.storeToken(response.token);
-        localStorage.setItem('token', response.token); // Add this line
+        //this.signInService.storeToken(response.token);
+        localStorage.setItem('token', response.token);
 
 
 
         // Store the userId in localStorage after successful login
-        localStorage.setItem('userID', this.userID); // <-- Store userId here!
-        console.log('User ID stored:', this.userID);
+        localStorage.setItem('userID', response.id);
+        console.log('User ID stored:', response.id);
 
 
         // Redirect based on user role

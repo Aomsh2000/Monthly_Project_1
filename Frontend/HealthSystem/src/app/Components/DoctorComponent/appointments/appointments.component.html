@@ -1,20 +1,21 @@
-
 <div class="container-fluid mt-4">
   <h2 class="mb-3 fw-bold">Appointments</h2>
   
   <!-- Filter Bar -->
   <div class="d-flex gap-3 mb-3">
   
-<!-- Status Filter -->
-<div>
-  <label for="status" class="me-2 fw-semibold">Filter by status:</label>
-  <select id="status" class="form-select" [(ngModel)]="statusFilter" style="width: 150px;">
-    <option value="">All</option>
-    <option value="Upcoming">Upcoming</option>
-    <option value="Current">Current</option>
-    <option value="Past">Past</option>
-  </select>
-</div>
+
+
+    <!-- Status Filter -->
+    <div>
+      <label for="status" class="me-2 fw-semibold">Filter by status:</label>
+      <select id="status" class="form-select" [(ngModel)]="statusFilter" style="width: 150px;">
+        <option value="">All</option>
+        <option value="Upcoming">Upcoming</option>
+        <option value="Current">Current</option>
+        <option value="Past">Past</option>
+      </select>
+    </div>
 </div>
 
   <!-- Appointments Table -->
@@ -30,34 +31,41 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let appointment of appointments" class="border p-4 rounded mb-4 shadow-sm">
-          <td>{{ appointment.appointmentDate }}</td>
+        <tr *ngFor="let appointment of filteredAppointments" class="border p-4 rounded mb-4 shadow-sm">
+          <td>{{ appointment.appointmentDate | date: 'yyyy-MM-dd' }}</td>
           <td>{{ appointment.appointmentTime }}</td>
-        
           <td>{{ appointment.patient.user.firstName }} {{ appointment.patient.user.middleName }} {{ appointment.patient.user.lastName }}</td>
 
           <td>
+            <!-- Update Status dynamically based on the filtered appointments -->
             <span class="badge" 
                   [ngClass]="{
-                    'bg-success': appointment.status === 0, 
-                    'bg-warning': appointment.status === 1, 
-                    'bg-danger': appointment.status === 2
+                    'bg-success': appointment.statusText === 'Upcoming', 
+                    'bg-warning': appointment.statusText === 'Current', 
+                    'bg-danger': appointment.statusText === 'Past'
                   }">
-              {{ appointment.status === 0 ? 'Upcoming' : (appointment.status === 1 ? 'Current' : 'Past') }}
+              {{ appointment.statusText }}
             </span>
           </td>
+         
+           
           <td>
-            <button class="btn btn-success btn-sm" (click)="openPopup(appointment.appointmentID)">
+            <button 
+              class="btn btn-success btn-sm"
+              [disabled]="appointment.statusText !== 'Current'" 
+              [ngClass]="{'disabled-button': appointment.statusText !== 'Current'}"
+              (click)="openPopup(appointment.appointmentID)">
               Add Note
             </button>
-        
-
-          </td>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
+
+
+
 
 <!-- Modal for Adding Note --> 
  <div class="modal fade show d-block" *ngIf="isModalOpen" tabindex="-1">
@@ -76,19 +84,5 @@
         <button class="btn btn-primary" (click)="saveNote()">Save</button>
       </div>
     </div>
-  </div>
-</div> 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  </div>
+</div>

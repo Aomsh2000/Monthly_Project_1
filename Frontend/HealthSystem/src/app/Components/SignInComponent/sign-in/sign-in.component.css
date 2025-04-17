@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image:url("../../../Assets/SignInBackground.png");
+  background-image: url("../../../Assets/SignInBackground.png");
   background-position: center;
   background-repeat: none;
   background-size: contain;
@@ -21,6 +21,7 @@
   font-size: 32px;
   font-weight: bold;
   margin-bottom: 30px;
+  margin-top: 4rem;
 }
 
 /* Error message */
@@ -67,3 +68,7 @@
   background-color: #3a8d8f;
 }
 
+img {
+  width: 50%;
+
+}

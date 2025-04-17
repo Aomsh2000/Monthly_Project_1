@@ -5,6 +5,11 @@ import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 
+//Bugsnag
+import Bugsnag from '@bugsnag/js';
+Bugsnag.start({ apiKey: 'a3e817ac8adf630ad339055527ef6ca1' });
+console.log('✅ Bugsnag has been started');
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),

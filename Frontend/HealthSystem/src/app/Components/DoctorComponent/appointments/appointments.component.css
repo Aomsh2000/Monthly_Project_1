@@ -55,4 +55,9 @@ th {
   font-weight: bold;
 }
 
-
+.disabled-button {
+  background-color: #ccc !important;
+  border-color: #ccc !important;
+  cursor: not-allowed;
+ 
+}

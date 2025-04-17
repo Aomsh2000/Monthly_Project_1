@@ -54,3 +54,9 @@ hr {
 p {
     color: #ddd;
 }
+
+img {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0;
+}

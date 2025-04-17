@@ -5,6 +5,7 @@ import { AdminService } from '../../../Services/AdminServices/admin.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
+import Bugsnag from '@bugsnag/js';
 
 @Component({
   selector: 'app-create-patient',
@@ -24,6 +25,7 @@ export class CreatePatientComponent {
     private adminService: AdminService,
     private router: Router
   ) {
+    // form validations
     this.patientForm = this.fb.group({
       user: this.fb.group({
         firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -61,9 +63,6 @@ export class CreatePatientComponent {
       next: (response) => {
         this.isLoading = false;
         this.successMessage = 'Patient created successfully!';
-        // Optionally reset form or navigate away
-        // this.patientForm.reset();
-        // this.router.navigate(['/admin/patients']);
       },
       error: (error) => {
         this.isLoading = false;
@@ -84,7 +83,39 @@ export class CreatePatientComponent {
 
       if (control instanceof FormGroup) {
         this.markFormGroupTouched(control);
+        Bugsnag.notify(new Error('Validation failed on Create Patient form'), event => {
+          event.context = 'CreatePatientComponent.formValidation';
+          event.addMetadata('formErrors', this.getFormValidationErrors());
+        });
       }
     });
   }
+
+
+
+  private getFormValidationErrors() {
+    const errors: any = {};
+    Object.keys(this.patientForm.controls).forEach(key => {
+      const control = this.patientForm.get(key);
+      if (control instanceof FormGroup) {
+        errors[key] = this.getGroupErrors(control);
+      } else if (control && control.invalid) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
+  }
+
+  private getGroupErrors(group: FormGroup) {
+    const groupErrors: any = {};
+    Object.keys(group.controls).forEach(key => {
+      const control = group.get(key);
+      if (control && control.invalid) {
+        groupErrors[key] = control.errors;
+      }
+    });
+    return groupErrors;
+  }
+
+
 }

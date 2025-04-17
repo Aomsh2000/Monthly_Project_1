@@ -14,7 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HealthSystemTest")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+<<<<<<< HEAD
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+368702be8b9e04cbc458af664c00761ac10a5d60")]
+=======
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ebfd9f83fb6a6dbd3252bb446950979f0e3aae5b")]
+>>>>>>> b8b7d1ba1a346b9d04c1d7eaa35e1504e6fc935e
 [assembly: System.Reflection.AssemblyProductAttribute("HealthSystemTest")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HealthSystemTest")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

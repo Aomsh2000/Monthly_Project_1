@@ -60,6 +60,8 @@ export class PatientDashboardComponent implements OnInit {
   // Navigate to Login Page
   showLogin() {
     localStorage.removeItem('userID');
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwtToken');
     this.router.navigate(['/signin']);
   }
 }

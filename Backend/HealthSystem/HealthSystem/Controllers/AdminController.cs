@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using HealthSystem.Services;
+
 namespace HealthSystem.Controllers
 {
     [Route("api/admin")]
@@ -28,11 +29,6 @@ namespace HealthSystem.Controllers
             _twilioService = twilioService;
         }
 
-        [HttpGet("test-error")]
-        public IActionResult TestError()
-        {
-            throw new Exception("error with BugSnag");
-        }
 
         // ------- Admin & statistics -------
 
@@ -82,21 +78,16 @@ namespace HealthSystem.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-
-
                 // Check if email already exists
                 if (await _context.Users.AnyAsync(u => u.Email == request.user.email))
                 {
                     return BadRequest("Email already exists.");
                 }
-
                 // Check if national ID already exists
                 if (await _context.Patients.AnyAsync(p => p.NationalID == request.nationalID))
                 {
                     return BadRequest("National ID already exists.");
                 }
-
-
                 // Parse date string into year, month, day components
                 DateTime dateOfBirth;
                 try
@@ -130,7 +121,6 @@ namespace HealthSystem.Controllers
                     Password = BCrypt.Net.BCrypt.HashPassword(request.user.password),
                     Role = UserRole.Patient
                 };
-
                 // Create the Patient
                 var patient = new Patient
                 {
@@ -142,7 +132,6 @@ namespace HealthSystem.Controllers
                     Allergies = request.allergies,
                     ChronicDiseases = request.chronicDiseases
                 };
-
                 // Add to database
                 _context.Users.Add(user);
                 _context.Patients.Add(patient);
@@ -155,11 +144,12 @@ namespace HealthSystem.Controllers
                     userId = user.UserID
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                throw; //rethrows the exception to allow Bugsnag to log it
             }
         }
+
 
 
 
@@ -187,7 +177,7 @@ namespace HealthSystem.Controllers
                 LastName = request.LastName,
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber,
-                Password = request.Password,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 Role = UserRole.Doctor
             };
 

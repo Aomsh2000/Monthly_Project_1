@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, AfterViewCheck
 import { AdminService } from '../../../Services/AdminServices/admin.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import Bugsnag from '@bugsnag/js';
 
 declare const echarts: any;
 
@@ -60,6 +61,10 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit, AfterView
       error: err => {
         console.error('Failed to load bar chart data:', err);
         this.error = 'Failed to load chart data';
+
+        // Send error to Bugsnag
+        Bugsnag.notify(err);
+
       }
     });
 
