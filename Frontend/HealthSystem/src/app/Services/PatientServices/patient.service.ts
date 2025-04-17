@@ -1,4 +1,3 @@
-// services/patient.service.ts
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -12,11 +11,7 @@ export class PatientService {
   private apiUrl = 'https://localhost:7021/api/patients';
 
   constructor(private http: HttpClient) { }
-
-
-
-
-  // In patient.service.ts
+//use API (GET patient data)
   getPatientData(userID: string): Observable<any> {
 
     const token = localStorage.getItem('token');
@@ -30,7 +25,7 @@ export class PatientService {
 
   }
 
-
+//use API (GET patient appointment)
   getAppointments(userID: string): Observable<any> {
 
     const token = localStorage.getItem('token');

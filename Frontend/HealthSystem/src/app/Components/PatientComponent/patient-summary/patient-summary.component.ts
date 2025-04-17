@@ -15,14 +15,13 @@ import { HttpClientModule } from '@angular/common/http';
 
 export class PatientSummaryComponent implements OnInit {
   @Input() userID!: string;
-  //summaryData: any;
   patientData: any;
 
   constructor(private patientService: PatientService) {}
 
   ngOnInit(): void {
     this.userID = localStorage.getItem('userID') || '';
-
+//use GET patient data
     if (this.userID) {
       this.patientService.getPatientData(this.userID).subscribe({
         next: (data) => {

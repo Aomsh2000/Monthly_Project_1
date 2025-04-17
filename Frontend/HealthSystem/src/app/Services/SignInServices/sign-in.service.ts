@@ -15,21 +15,17 @@ export class SignInService {
     return this.http.post<any>(this.apiUrl, { Email, password });
   }
 
-  // Store the token in localStorage (or sessionStorage, depending on your preference)
+  // Store the token in localStorage 
   storeToken(token: string): void {
     localStorage.setItem('jwtToken', token);
   }
-
-  // storeID(ID: string): void {
-  //   localStorage.setItem('userID', ID);
-  // }
 
   // Get the stored token (for use in requests)
   getToken(): string | null {
     return localStorage.getItem('jwtToken');
   }
 
-  // Check if the user is authenticated (i.e., token exists)
+  // Check if the user is authenticated 
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
@@ -39,15 +35,4 @@ export class SignInService {
     localStorage.removeItem('jwtToken');
   }
 
-  // Get the user ID (this would require an endpoint that returns user details based on the token)
-  /*getUserDetails(): Observable<any> {
-    const token = this.getToken();
-    if (token) {
-      // Assuming there's an API endpoint that provides user details using the token
-      return this.http.get<any>('http://localhost:5187/api/Auth/user-details', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    }
-    return new Observable(observer => observer.error('No token found'));
-  }*/
 }

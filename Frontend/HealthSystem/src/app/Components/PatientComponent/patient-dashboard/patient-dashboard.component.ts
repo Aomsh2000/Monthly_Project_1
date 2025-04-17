@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./patient-dashboard.component.css']
 })
 export class PatientDashboardComponent implements OnInit {
+  // user-id used to retrive patient data
   activeTab: string = 'summary';
   userID: string = '';
   patientName: string = '';
@@ -40,15 +41,15 @@ export class PatientDashboardComponent implements OnInit {
       );
     }
   }
-
+  //view patient information
   showSummary() {
     this.activeTab = 'summary';
   }
-
+  //vire patient appointmeny
   showAppointments() {
     this.activeTab = 'appointments';
   }
-
+  //side-bar nav
   navigateToInfo(): void {
     this.activeTab = 'summary';
   }

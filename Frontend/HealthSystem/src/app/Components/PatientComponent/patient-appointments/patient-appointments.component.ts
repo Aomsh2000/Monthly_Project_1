@@ -18,6 +18,7 @@ export class PatientAppointmentsComponent implements OnInit {
   constructor(private PatientService: PatientService) { }
 
   ngOnInit(): void {
+    //use GET patient appointment 
     this.userID = localStorage.getItem('userID') || '';
     if (this.userID) {
       this.PatientService.getAppointments(this.userID).subscribe(

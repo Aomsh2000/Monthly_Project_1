@@ -14,6 +14,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./sign-in.component.css']
 })
 export class SigninComponent {
+  //user should enter valid email and password to sign in
   email: string = '';
   password: string = '';
   errorMessage: string = '';
@@ -29,7 +30,6 @@ export class SigninComponent {
     this.signInService.signIn(this.email, this.password).subscribe({
       next: (response) => {
         // Store the token in localStorage (or sessionStorage, if preferred)
-        //this.signInService.storeToken(response.token);
         localStorage.setItem('token', response.token);
 
 
