@@ -1,0 +1,21 @@
+services:
+  healthsystem:
+    image: ${DOCKER_REGISTRY-}healthsystem
+    build:
+      context: .
+      dockerfile: HealthSystem/Dockerfile
+    depends_on:
+      - mysql
+    environment:
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=HealthSystem;user=root;password=1234567890
+    ports:
+      - "8001:80"  
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234567890
+      MYSQL_DATABASE: HealthSystem
+    ports:
+      - "3307:3306"

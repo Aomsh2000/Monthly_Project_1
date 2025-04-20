@@ -41,7 +41,7 @@ builder.Services.AddBugsnag(configuration =>
 var dbPassword = builder.Configuration["DB_PASSWORD"];
 
 // Update the connection string with the password from the environment variable
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection").Replace("{DB_PASSWORD}", dbPassword);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Configure DbContext with MySQL
 // Configure DbContext with MySQL and Logging
@@ -98,11 +98,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 			IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
 		};
 	});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(80); // Use HTTP only
+});
 var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
 	app.UseSwagger();
 	app.UseSwaggerUI();
@@ -140,7 +145,11 @@ app.Use(async (context, next) =>
     }
 });
 app.UseAuthorization();
-
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{controller=Home}/{action=Index}/{id?}");

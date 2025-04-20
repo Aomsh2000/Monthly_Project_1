@@ -6,7 +6,7 @@ import { HttpHeaders } from '@angular/common/http';
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'https://localhost:7021/api/admin';
+  private apiUrl = 'http://localhost:8001/api/admin';
 
   constructor(private http: HttpClient) { }
 

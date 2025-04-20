@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class SignInService {
-  private apiUrl = 'https://localhost:7021/api/Auth/signin';
+  private apiUrl = 'http://localhost:8001/api/Auth/signin';
 
   constructor(private http: HttpClient) { }
 
